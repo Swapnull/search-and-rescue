@@ -54,11 +54,6 @@ void turnSensorSetup()
   // High-pass filter disabled
   gyro.writeReg(L3G::CTRL5, 0b00000000);
 
-  lcd.clear();
-  lcd.print(F("Gyro cal"));
-
-  // Turn on the yellow LED in case the LCD is not available.
-  ledYellow(1);
 
   // Delay to give the user time to remove their finger.
   delay(500);
@@ -74,21 +69,13 @@ void turnSensorSetup()
     // Add the Z axis reading to the total.
     total += gyro.g.z;
   }
-  ledYellow(0);
   gyroOffset = total / 1024;
 
   // Display the angle (in degrees from -180 to 180) until the
   // user presses A.
-  lcd.clear();
   turnSensorReset();
-  while (!buttonA.getSingleDebouncedRelease())
-  {
-    turnSensorUpdate();
-    lcd.gotoXY(0, 0);
-    lcd.print((((int32_t)turnAngle >> 16) * 360) >> 16);
-    lcd.print(F("   "));
-  }
-  lcd.clear();
+  turnSensorUpdate();
+
 }
 
 // This should be called to set the starting point for measuring

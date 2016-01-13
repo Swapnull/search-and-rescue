@@ -4,7 +4,7 @@ measure how much the robot has turned about its Z axis. */
 
 #pragma once
 
-#include <Zumo32U4.h>
+#include <L3G.h>
 
 // This constant represents a turn of 45 degrees.
 const int32_t turnAngle45 = 0x20000000;
@@ -23,6 +23,4 @@ extern uint32_t turnAngle;
 extern int16_t turnRate;
 
 // These objects must be defined in your sketch.
-extern Zumo32U4ButtonA buttonA;
-extern Zumo32U4LCD lcd;
 extern L3G gyro;
