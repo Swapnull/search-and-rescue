@@ -11,11 +11,9 @@
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/Arduino.h \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/variants/standard/pins_arduino.h \
  lib/QTRSensors/QTRSensors.h \
- lib/ZumoReflectanceSensorArray/ZumoReflectanceSensorArray.h \
- lib/L3G/../QTRSensors/QTRSensors.h lib/ZumoMotors/ZumoMotors.h \
- lib/ZumoBuzzer/ZumoBuzzer.h lib/Pushbutton/Pushbutton.h \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/libraries/SoftwareSerial/SoftwareSerial.h \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/Stream.h \
- lib/Motion/TurnSensor.h lib/L3G/L3G.h \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/libraries/Wire/Wire.h \
- lib/Motion/Motion.h lib/Motion/Utilities.h
+ lib/Motion/Motion.h lib/Motion/Utilities.h \
+ lib/ZumoReflectanceSensorArray/ZumoReflectanceSensorArray.h \
+ lib/L3G/../QTRSensors/QTRSensors.h lib/Motion/TurnSensor.h lib/L3G/L3G.h
