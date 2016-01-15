@@ -8,14 +8,18 @@ class Motion{
 public:
     Motion();
     void setupReflectanceSensors();
+    bool run();
     void turn(int target);
-    void advance();
-    void checkForWalls();
+    bool advance();
+    bool checkForWalls();
     bool againstWall();
     bool aboveLine(int sensor);
+    bool checkRoom();
+    int getDistance();
 
     ZumoReflectanceSensorArray reflectanceSensors;
     unsigned int sensors[6];
+    bool inRoom;
 
 private:
 

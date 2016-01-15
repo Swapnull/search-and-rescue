@@ -5,16 +5,24 @@ This file was written by Martyn Rushton (Swapnull) although it was based upon wo
 #include "Motion.h"
 #include "ZumoMotors.h"
 #include "TurnSensor.h"
+#include "NewPing.h"
+#include <SoftwareSerial.h>
 
 #define SENSOR_THRESHOLD 30
+#define TRIGGER_PIN  11
+#define ECHO_PIN     12
+#define MAX_DISTANCE 50
 
 L3G gyro;
 ZumoMotors motors;
+NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
+SoftwareSerial XBee(0, 1); //RX, RT
+
 
 Motion::Motion()
 {
-    unsigned int sensors[6];
-    ZumoReflectanceSensorArray reflectanceSensors;
+    XBee.begin(9600);
+    inRoom = false;
 }
 
 void Motion::setupReflectanceSensors(){
@@ -35,6 +43,16 @@ void Motion::setupReflectanceSensors(){
     //stop motors after calibration
     motors.setSpeeds(0, 0);
 
+}
+
+bool Motion::run(){
+    if(!inRoom){
+        return advance();
+    } else {
+        checkRoom();
+        inRoom = true;
+        return true;
+    }
 }
 
 void Motion::turn(int target){
@@ -65,41 +83,76 @@ void Motion::turn(int target){
     motors.setSpeeds(0, 0);
 }
 
-void Motion::advance(){
+bool Motion::advance(){
     //look right, see if there is a wall.
     turn(-90);
-    checkForWalls();
+    if(!checkForWalls()){
+        return false;
+    }
+
     //look left, see if there is a wall.
-    turn(90);turn(90); // 2x 90 degrees is more accurate than 1x180 for some reason
-    checkForWalls();
-    //advance
+    turn(90);turn(90); // 2x 90 degrees is more accurate than 1x180 due to gyro inaccuracies.
+    if(!checkForWalls()){
+        return false;
+    }
+
+    //turn back straight and advance
     turn(-90);
+    //checkForWalls();
     motors.setSpeeds(100, 100);
 }
 
-void Motion::checkForWalls(){
+bool Motion::checkForWalls(){
     //edge fowards checking for walls.
     reflectanceSensors.readLine(sensors);
-    while(!againstWall()){
+    int t = millis(); //time coming into the function.
+    int timeout = 2000;
+    while(!againstWall() && ((millis() - t) < timeout)){
+        //read date from sensors
         reflectanceSensors.readLine(sensors);
+
+        //check if right side is above line
         if(aboveLine(sensors[0]) && aboveLine(sensors[1])){
             motors.setLeftSpeed(0);
         }else{
             motors.setLeftSpeed(100);
         }
-
+        //check if left size is above line.
         if(aboveLine(sensors[4]) && aboveLine(sensors[5])){
             motors.setRightSpeed(0);
         }else{
             motors.setRightSpeed(100);
         }
     }
+
+    if(againstWall())
+        //wall found
+        return true;
+    else
+        //no wall found, hit timeout
+        return false;
 }
 
+bool Motion::checkRoom(){
+        int degrees = 360;
+        while(degrees > 0){
+            if(getDistance() > 0){
+                XBee.println("Found Object");
+                return true;
+            }
+            degrees = degrees - 90;
+        }
+        return false;
+
+}
+
+int Motion::getDistance(){
+    return sonar.ping()/ US_ROUNDTRIP_CM;
+}
 bool Motion::againstWall(){
 
     // DEBUG : Print out if the sensors think they are above a line.
-    Serial.print(aboveLine(sensors[0]));
+    /*Serial.print(aboveLine(sensors[0]));
     Serial.print(" : ");
     Serial.print(aboveLine(sensors[1]));
     Serial.print(" : ");
@@ -109,7 +162,7 @@ bool Motion::againstWall(){
     Serial.print(" : ");
     Serial.print(aboveLine(sensors[4]));
     Serial.print(" : ");
-    Serial.println(aboveLine(sensors[5]));
+    Serial.println(aboveLine(sensors[5]));*/
 
     if(aboveLine(sensors[0]) == 1 && aboveLine(sensors[1]) == 1 && aboveLine(sensors[4]) == 1 && aboveLine(sensors[5]) == 1){
         return true;
