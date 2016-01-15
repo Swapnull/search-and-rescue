@@ -18,7 +18,7 @@ const int32_t turnAngle1 = (turnAngle45 + 22) / 45;
 // These are defined in TurnSensor.cpp:
 void turnSensorSetup();
 void turnSensorReset();
-void turnSensorUpdate();
+int32_t turnSensorUpdate();
 extern uint32_t turnAngle;
 extern int16_t turnRate;
 

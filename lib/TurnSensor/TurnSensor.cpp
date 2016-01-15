@@ -43,7 +43,6 @@ void turnSensorSetup()
 {
   Wire.begin();
   gyro.init();
-
   // 800 Hz output data rate,
   // low-pass filter cutoff 100 Hz
   gyro.writeReg(L3G::CTRL1, 0b11111111);
@@ -76,6 +75,7 @@ void turnSensorSetup()
   turnSensorReset();
   turnSensorUpdate();
 
+
 }
 
 // This should be called to set the starting point for measuring
@@ -88,7 +88,7 @@ void turnSensorReset()
 
 // Read the gyro and update the angle.  This should be called as
 // frequently as possible while using the gyro to do turns.
-void turnSensorUpdate()
+int32_t turnSensorUpdate()
 {
   // Read the measurements from the gyro.
   gyro.read();
@@ -113,4 +113,7 @@ void turnSensorUpdate()
   // (0.07 dps/digit) * (1/1000000 s/us) * (2^29/45 unit/degree)
   // = 14680064/17578125 unit/(digit*us)
   turnAngle += (int64_t)d * 14680064 / 17578125;
+
+//(((int32_t) turn angle >> 16 ) * 360) >> 16;
+  return (((int32_t) turnAngle >> 16 ) * 360) >> 16;
 }
