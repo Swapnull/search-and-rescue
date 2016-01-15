@@ -1,5 +1,5 @@
-.build_ano/uno/TurnAngleCommand/IMUManager.d .build_ano/uno/TurnAngleCommand/IMUManager.o: lib/TurnAngleCommand/IMUManager.cpp \
- lib/TurnAngleCommand/IMUManager.h lib/LSM303/LSM303.h \
+.build_ano/uno/Motion/Motion.d .build_ano/uno/Motion/Motion.o: lib/Motion/Motion.cpp lib/Motion/Motion.h \
+ lib/Motion/Utilities.h lib/ZumoMotors/ZumoMotors.h \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/Arduino.h \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/binary.h \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/WCharacter.h \
@@ -11,4 +11,4 @@
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/USBAPI.h \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/Arduino.h \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/variants/standard/pins_arduino.h \
- lib/L3G/L3G.h lib/TurnAngleCommand/Utilities.h
+ lib/Motion/TurnSensor.h lib/L3G/L3G.h

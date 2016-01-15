@@ -16,7 +16,6 @@
  lib/ZumoBuzzer/ZumoBuzzer.h lib/Pushbutton/Pushbutton.h \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/libraries/SoftwareSerial/SoftwareSerial.h \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/Stream.h \
- lib/TurnSensor/TurnSensor.h lib/L3G/L3G.h \
+ lib/Motion/TurnSensor.h lib/L3G/L3G.h \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/libraries/Wire/Wire.h \
- lib/TurnAngleCommand/TurnAngleCommand.h \
- lib/TurnAngleCommand/PIDController.h lib/TurnAngleCommand/Utilities.h
+ lib/Motion/Motion.h lib/Motion/Utilities.h

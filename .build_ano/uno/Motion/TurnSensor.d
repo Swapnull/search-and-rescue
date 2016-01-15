@@ -1,10 +1,10 @@
-.build_ano/uno/TurnSensor/TurnSensor.d .build_ano/uno/TurnSensor/TurnSensor.o: lib/TurnSensor/TurnSensor.cpp \
+.build_ano/uno/Motion/TurnSensor.d .build_ano/uno/Motion/TurnSensor.o: lib/Motion/TurnSensor.cpp \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/libraries/Wire/Wire.h \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/Stream.h \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/Print.h \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/WString.h \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/Printable.h \
- lib/TurnSensor/TurnSensor.h lib/L3G/L3G.h \
+ lib/Motion/TurnSensor.h lib/L3G/L3G.h \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/Arduino.h \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/binary.h \
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/WCharacter.h \

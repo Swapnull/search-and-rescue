@@ -1,38 +1,28 @@
-#include "TurnAngleCommand.h"
+/*
+This file was written by Martyn Rushton (Swapnull) although it was based upon work done by some guys at Texas Instruments quite heavily ()
+*/
+
+#include "Motion.h"
 #include "ZumoMotors.h"
-//#include "IMUManager.h"
 #include "TurnSensor.h"
-#include "PIDController.h"
 
 L3G gyro;
 ZumoMotors motors;
-PIDController spinController = PIDController((float) 6.5, (float) 0.001, (float) 0.0);
 
-TurnAngleCommand::TurnAngleCommand()
+Motion::Motion()
 {}
 
-void TurnAngleCommand::turn(int target){
+void Motion::turn(int target){
     turnSensorReset();
     int32_t currHeading = Utilities::wrapAngle(turnSensorUpdate());
     int32_t targetAngle = Utilities::wrapAngle(currHeading + target);
     float error, power;
-    Serial.println("turning");
-    Serial.println(currHeading);
-    Serial.println(targetAngle);
     bool done = false;
     while(!done){
-        Serial.print(currHeading);
-        Serial.print(" : ");
+
         error = Utilities::wrapAngle(turnSensorUpdate() - targetAngle);
-        Serial.print(error);
-        Serial.print(" : ");
-        Serial.print(power);
-        Serial.print(" : ");
         done = Utilities::inRange(fabs(error), (float) -1,(float) 1);
-
         power = 150;
-        Serial.println(power);
-
         /* Note: this is used because powers higher than 250 result
          * in a buildup of error in the integrated gyro angle
          */
@@ -44,12 +34,19 @@ void TurnAngleCommand::turn(int target){
         }
         else {
             motors.setSpeeds(-power, power);
-
         }
-
         currHeading = turnSensorUpdate();
-        Serial.println(done);
-
     }
     motors.setSpeeds(0, 0);
+}
+
+
+void Motion::advance(){
+    //look right, see if there is a wall.
+    turn(-90);
+    //look left, see if there is a wall.
+    turn(90);turn(90); // 2x 90 degrees is more accurate than 1x180 for some reason
+    //advance
+    turn(-90);
+    motors.setSpeeds(100, 100);
 }

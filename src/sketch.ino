@@ -7,7 +7,7 @@
 #include <TurnSensor.h>
 #include <L3G.h>
 #include <Wire.h>
-#include "TurnAngleCommand.h"
+#include "Motion.h"
 
 
 #define SENSOR_THRESHOLD 30
@@ -18,7 +18,7 @@ ZumoReflectanceSensorArray reflectanceSensors;
 SoftwareSerial XBee(0, 1); //RX, RT
 const int MAX_SPEED = 400;
 unsigned int sensors[6];
-TurnAngleCommand turning;
+Motion motion;
 int power = 0;
 
 void setup(){
@@ -31,6 +31,7 @@ void setup(){
     digitalWrite(13, HIGH);
 
     turnSensorSetup();
+    setupReflectanceSensors();
 
     digitalWrite(13, LOW);
 
@@ -38,9 +39,9 @@ void setup(){
 
 void loop(){
 
-    //reflectanceSensors.readLine(sensors);
+    reflectanceSensors.readLine(sensors);
 
-    turning.turn(90);
+    motion.advance();
     Serial.println("turn command executed");
 
     delay(500);
@@ -67,33 +68,7 @@ void setupReflectanceSensors(){
 
 }
 
-void advanceUpCorridor(){
-        if(againstWall()){
-            Serial.println("Against Wall");
-        }
-}
 
-/*
-*
-* in:
-*   int direction - 1 for left, 2 for right
-*   int motorSpeed - the speed the motors should turn at
-*/
-/*void turn90(int direction, int motorSpeed){
-    turnSensorReset();
-
-    //1 for left, 2 for right
-    if(direction == 1){
-        motors.setSpeeds(-motorSpeed, motorSpeed);
-    } else{
-        motors.setSpeeds(motorSpeed, -motorSpeed);
-    }
-
-    while((int32_t)turnAngle < turnAngle45 * 2){
-        turnSensorUpdate();
-    }
-    motors.setSpeeds(0, 0);
-}*/
 
 /*
 * function :
@@ -118,7 +93,7 @@ boolean againstWall(){
     Serial.print(" : ");
     Serial.println(aboveLine(sensors[5]));
 
-    if(aboveLine(sensors[0]) == 1 || aboveLine(sensors[1]) == 1 || aboveLine(sensors[2]) == 1 || aboveLine(sensors[3]) == 1 || aboveLine(sensors[4]) == 1 || aboveLine(sensors[5]) == 1){
+    if(aboveLine(sensors[0]) == 1 && aboveLine(sensors[1]) == 1 && aboveLine(sensors[4]) == 1 && aboveLine(sensors[5]) == 1){
         return true;
     } else {
         return false;
