@@ -23,7 +23,7 @@ int tries;
 
 void setup(){
     //Initialization
-    //Serial.begin(9600);
+    Serial.begin(9600);
     Wire.begin();
     pinMode(13, OUTPUT);
 

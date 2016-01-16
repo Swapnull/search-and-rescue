@@ -9,8 +9,8 @@ This file was written by Martyn Rushton (Swapnull) although it was based upon wo
 #include <SoftwareSerial.h>
 
 #define SENSOR_THRESHOLD 30
-#define TRIGGER_PIN  11
-#define ECHO_PIN     12
+#define TRIGGER_PIN  6
+#define ECHO_PIN     2
 #define MAX_DISTANCE 50
 
 L3G gyro;
@@ -18,17 +18,17 @@ ZumoMotors motors;
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
 SoftwareSerial XBee(0, 1); //RX, RT
 
-
-Motion::Motion()
-{
+//constructor
+Motion::Motion(){
     XBee.begin(9600);
     inRoom = false;
+    roomCount = 0;
 }
 
+//Initialization of zumo's reflectance sensors
 void Motion::setupReflectanceSensors(){
     reflectanceSensors.init();
 
-    int i;
     for(int i = 0; i < 80; i++){
         if ((i > 10 && i <= 30) || (i > 50 && i <= 70)){
             motors.setSpeeds(-200, 200);
@@ -45,6 +45,7 @@ void Motion::setupReflectanceSensors(){
 
 }
 
+//start zumo going.
 bool Motion::run(){
     if(!inRoom){
         return advance();
@@ -55,6 +56,7 @@ bool Motion::run(){
     }
 }
 
+//turn a set number of degrees
 void Motion::turn(int target){
     turnSensorReset();
     int32_t currHeading = Utilities::wrapAngle(turnSensorUpdate());
@@ -83,30 +85,35 @@ void Motion::turn(int target){
     motors.setSpeeds(0, 0);
 }
 
+//look left for wall, look right for wall, move forward looking for wall.
 bool Motion::advance(){
     //look right, see if there is a wall.
     turn(-90);
-    if(!checkForWalls()){
+    if(!checkForWalls(2000)){
+        checkForRoom(1); //pass 1 for right
         return false;
     }
 
     //look left, see if there is a wall.
     turn(90);turn(90); // 2x 90 degrees is more accurate than 1x180 due to gyro inaccuracies.
-    if(!checkForWalls()){
+    if(!checkForWalls(2000)){
+        checkForRoom(2); //pass 2 for left
         return false;
     }
 
     //turn back straight and advance
     turn(-90);
-    //checkForWalls();
     motors.setSpeeds(100, 100);
+    if(!checkForWalls(2000)){
+        return false;
+    }
 }
 
-bool Motion::checkForWalls(){
+//moves forwards looking for a wall. Returns false if not found before a timeout.
+bool Motion::checkForWalls(int timeout){
     //edge fowards checking for walls.
     reflectanceSensors.readLine(sensors);
     int t = millis(); //time coming into the function.
-    int timeout = 2000;
     while(!againstWall() && ((millis() - t) < timeout)){
         //read date from sensors
         reflectanceSensors.readLine(sensors);
@@ -125,30 +132,84 @@ bool Motion::checkForWalls(){
         }
     }
 
-    if(againstWall())
+
+
+    if(againstWall()){
         //wall found
+        //back up from found wall slightly.
+        motors.setSpeeds(-100, -100);
+        delay(500);
+        motors.setSpeeds(0, 0);
         return true;
-    else
+    }else{
         //no wall found, hit timeout
         return false;
+    }
 }
 
+//checks to see if we have entered a room
+bool Motion::checkForRoom(int inDirection){
+    //look right, see if there is a wall.
+    turn(-90);
+    if(!checkForWalls(1000)){
+        return false;
+    }
+
+    //look left, see if there is a wall.
+    turn(90);turn(90); // 2x 90 degrees is more accurate than 1x180 due to gyro inaccuracies.
+    if(!checkForWalls(2000)){
+        return false;
+    }
+
+    //there is no wall to the left or right, must be in room.
+    exploreRoom(inDirection);
+}
+
+//explores the room and lets the user know if we have found anything.
+void Motion::exploreRoom(int inDirection){
+    roomCount++;
+    if(checkRoom()){
+        XBee.print("An object was found in room ");
+        XBee.println(roomCount);
+    }else{
+        XBee.print("No object was found in room ");
+        XBee.println(roomCount);
+    }
+
+    turn(90);turn(90); //turn 180 to face door
+
+    checkForWalls(0); //no timeout as we know there is a wall
+
+    if(inDirection == 1){
+        //entered from looking right. Need to turn right heading out.
+        turn(-90);
+    }else{
+        //entered from looking left, need to turn left heading out.
+        turn(90);
+    }
+}
+
+//returns weather there is an object in the room
 bool Motion::checkRoom(){
         int degrees = 360;
+        bool found = false;
         while(degrees > 0){
             if(getDistance() > 0){
-                XBee.println("Found Object");
-                return true;
+                Serial.println("Found Object");
+                found = true;
             }
+            turn(90);
             degrees = degrees - 90;
         }
-        return false;
-
+        return found;
 }
 
+//returns distance found by ultrasonic sensor.
 int Motion::getDistance(){
     return sonar.ping()/ US_ROUNDTRIP_CM;
 }
+
+//returns if zumo is against a wall or not.
 bool Motion::againstWall(){
 
     // DEBUG : Print out if the sensors think they are above a line.
@@ -171,6 +232,7 @@ bool Motion::againstWall(){
     }
 }
 
+//returns if sensor is above the wall
 bool Motion::aboveLine(int sensor){
     return sensor > SENSOR_THRESHOLD;
 }
