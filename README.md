@@ -25,8 +25,8 @@ The XBee's are not mandatory. If you use an XBee, it should be setup following t
 
 The HC-SR04 and any jumper cables used should be secured using electrical tape or something similar.
 
-![/assets/img/zumo1.png]()
-
+![Zumo Image 1](https://github.com/Swapnull/search-and-rescue/blob/master/assets/img/zumo1.jpg)
+![Zumo Image 2](https://github.com/Swapnull/search-and-rescue/blob/master/assets/img/zumo1.jpg)
 ### Software Setup
 
 #### [Arduino IDE](http://www.arduino.cc/en/Main/Software)
