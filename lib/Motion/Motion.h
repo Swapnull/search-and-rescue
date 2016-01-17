@@ -18,6 +18,8 @@ public:
     int getDistance();
     bool checkForRoom(int inDirection);
     void exploreRoom(int inDirection);
+    bool checkForEnd();
+    void levelToWall();
 
     ZumoReflectanceSensorArray reflectanceSensors;
     unsigned int sensors[6];

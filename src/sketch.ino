@@ -20,11 +20,12 @@ void setup(){
 
     digitalWrite(13, HIGH);
     turnSensorSetup();
-
+    Serial.println("Press button to start calibration...");
     button.waitForButton();
 
     motion.setupReflectanceSensors();
 
+    Serial.println("Calibrated. Press button to start...");
     button.waitForButton();
 
     digitalWrite(13, LOW);
@@ -41,7 +42,9 @@ void loop(){
             motion.inRoom = true;
         }
     }*/
+    //Serial.println(motion.getDistance());
     motion.run();
+
     delay(1000);
 
 }

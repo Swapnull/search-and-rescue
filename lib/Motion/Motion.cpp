@@ -52,35 +52,47 @@ bool Motion::run(){
 
 //turn a set number of degrees
 void Motion::turn(int target){
+
+    Serial.print("turning ");
+    if(target > 0)
+        Serial.println("anticlockwise.");
+    else
+        Serial.println("clockwise");
+
     turnSensorReset();
     int32_t currHeading = Utilities::wrapAngle(turnSensorUpdate());
     int32_t targetAngle = Utilities::wrapAngle(currHeading + target);
-    float error, power;
+    float error, speed;
     bool done = false;
     while(!done){
 
         error = Utilities::wrapAngle(turnSensorUpdate() - targetAngle);
         done = Utilities::inRange(fabs(error), (float) -1,(float) 1);
-        power = 150;
-        /* Note: this is used because powers higher than 250 result
+
+        speed = 150;
+        /*speed = (error * 6.5) + ((int)(error * 0.001));
+        Serial.print(error);
+        Serial.print(" : ");
+         /* Note: this is used because powers higher than 250 result
          * in a buildup of error in the integrated gyro angle
-         */
-        if (power > 200) {
-            power = 200;
-        }
+         *
+        if (speed > 200) {
+            speed = 100;
+        }*/
+
         if (error > 0) {
-            motors.setSpeeds(power, -power);
+            motors.setSpeeds(speed, -speed);
         }
         else {
-            motors.setSpeeds(-power, power);
+            motors.setSpeeds(-speed, speed);
         }
-        currHeading = turnSensorUpdate();
     }
     motors.setSpeeds(0, 0);
 }
 
 //look left for wall, look right for wall, move forward looking for wall.
 bool Motion::advance(){
+    Serial.println("Advancing");
     //look right, see if there is a wall.
     turn(-90);
     if(!checkForWalls(2000)){
@@ -96,9 +108,10 @@ bool Motion::advance(){
     //turn back straight and advance
     turn(-90);
     motors.setSpeeds(100, 100);
-    /*if(!checkForWalls(200)){
+    if(checkForWalls(500)){
+        checkForEnd();
         return false;
-    }*/
+    }
 }
 
 //moves forwards looking for a wall. Returns false if not found before a timeout.
@@ -107,10 +120,13 @@ bool Motion::checkForWalls(int timeout){
     Serial.println("checking for wall");
     reflectanceSensors.readLine(sensors);
     int t = millis(); //time coming into the function.
-    while(!againstWall() && (((millis() - t) < timeout) || timeout == 0)){
+    while(againstWall() != 1 && (((millis() - t) < timeout) || timeout == 0)){
         //read date from sensors
         reflectanceSensors.readLine(sensors);
 
+        if(againstWall() == 2 || againstWall() == 3){
+            break;
+        }
         //check if right side is above line
         if(aboveLine(sensors[0]) && aboveLine(sensors[1])){
             motors.setLeftSpeed(0);
@@ -130,6 +146,7 @@ bool Motion::checkForWalls(int timeout){
 
     if(againstWall()){
         //wall found
+        levelToWall();
         return true;
     }else{
         //no wall found, hit timeout
@@ -149,7 +166,7 @@ bool Motion::checkForRoom(int inDirection){
     bool foundLeft = checkForWalls(500);
 
     //there is no wall to the left or right, must be in room.
-    if(!foundLeft && !foundRight){
+    if(!foundLeft && !foundRight ){
         exploreRoom(inDirection);
     }
     Serial.println("Exiting Room");
@@ -195,12 +212,64 @@ void Motion::exploreRoom(int inDirection){
     delay(100);
 }
 
+bool Motion::checkForEnd(){
+        turn(-90);
+        if(!checkForWalls(2000)){
+            return false;
+        }
+
+        turn(90);turn(90);
+        if(!checkForWalls(2000)){
+            return false;
+        }
+
+        //a wall has been found ahead, left and right, must be the end.
+        Serial.println("Reached end of corridor, returning to base");
+        return true;
+}
 
 //returns distance found by ultrasonic sensor.
 int Motion::getDistance(){
     return sonar.ping()/ US_ROUNDTRIP_CM;
 }
 
+void Motion::levelToWall(){
+    //first level so both sensors are on wall
+    //check if right side is above line
+
+    while(!againstWall()){
+        reflectanceSensors.readLine(sensors);
+        if(aboveLine(sensors[0]) != 1 && aboveLine(sensors[1]) != 1){
+            motors.setLeftSpeed(0);
+        }else{
+            motors.setLeftSpeed(80);
+        }
+        //check if left size is above line.
+        if(aboveLine(sensors[4]) != 1 && aboveLine(sensors[5]) != 1){
+            motors.setRightSpeed(0);
+        }else{
+            motors.setRightSpeed(80);
+        }
+    }
+
+    //due to the wall been about 2cm thick, we should level to the corridor.
+    //check if right side is above line
+    while(againstWall()){
+        reflectanceSensors.readLine(sensors);
+        if(aboveLine(sensors[0])){
+            motors.setLeftSpeed(-80);
+        }else{
+            motors.setLeftSpeed(0);
+        }
+        //check if left size is above line.
+        if(aboveLine(sensors[5])){
+            motors.setRightSpeed(-80);
+        }else{
+            motors.setRightSpeed(0);
+        }
+    }
+
+}
 //returns if zumo is against a wall or not.
 bool Motion::againstWall(){
 
@@ -217,8 +286,12 @@ bool Motion::againstWall(){
     Serial.print(" : ");
     Serial.println(aboveLine(sensors[5]));*/
 
-    if(aboveLine(sensors[0]) == 1 && aboveLine(sensors[1]) == 1 && aboveLine(sensors[4]) == 1 && aboveLine(sensors[5]) == 1){
-        return true;
+    if(aboveLine(sensors[0]) && aboveLine(sensors[1]) && aboveLine(sensors[4]) && aboveLine(sensors[5])){
+        return 1;
+    } else if(aboveLine(sensors[0]) && aboveLine(sensors[1]) && aboveLine(sensors[4])) {
+        return 2;
+    } else if(aboveLine(sensors[1]) && aboveLine(sensors[4]) && aboveLine(sensors[5])){
+        return 3;
     } else {
         return false;
     }
