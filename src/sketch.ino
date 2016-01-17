@@ -21,17 +21,18 @@ void setup(){
     digitalWrite(13, HIGH);
     turnSensorSetup();
 
-    /*button.waitForButton();
+    button.waitForButton();
 
     motion.setupReflectanceSensors();
 
-    button.waitForButton();*/
+    button.waitForButton();
 
     digitalWrite(13, LOW);
 
 }
 
 void loop(){
+    Serial.println("looping");
 
     /*if(!motion.run()){
         tries++;
@@ -40,8 +41,7 @@ void loop(){
             motion.inRoom = true;
         }
     }*/
-    //Serial.println();
-    motion.checkRoom();
+    motion.run();
     delay(1000);
 
 }

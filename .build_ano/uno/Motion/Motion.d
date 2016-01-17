@@ -15,5 +15,4 @@
  /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/variants/standard/pins_arduino.h \
  lib/ZumoMotors/ZumoMotors.h lib/Motion/TurnSensor.h lib/L3G/L3G.h \
  /Users/Swapnull/Documents/Arduino/libraries/NewPing/NewPing.h \
- /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/libraries/SoftwareSerial/SoftwareSerial.h \
- /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/Stream.h
+ lib/Pushbutton/Pushbutton.h

@@ -6,21 +6,21 @@ This file was written by Martyn Rushton (Swapnull) although it was based upon wo
 #include "ZumoMotors.h"
 #include "TurnSensor.h"
 #include "NewPing.h"
-#include <SoftwareSerial.h>
 
 #define SENSOR_THRESHOLD 30
 #define TRIGGER_PIN  6
 #define ECHO_PIN     2
 #define MAX_DISTANCE 50
+#include "Pushbutton.h"
+Pushbutton b(ZUMO_BUTTON);
+
 
 L3G gyro;
 ZumoMotors motors;
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
-SoftwareSerial XBee(0, 1); //RX, RT
 
 //constructor
 Motion::Motion(){
-    XBee.begin(9600);
     inRoom = false;
     roomCount = 0;
 }
@@ -47,13 +47,7 @@ void Motion::setupReflectanceSensors(){
 
 //start zumo going.
 bool Motion::run(){
-    if(!inRoom){
-        return advance();
-    } else {
-        checkRoom();
-        inRoom = true;
-        return true;
-    }
+    return advance();
 }
 
 //turn a set number of degrees
@@ -91,30 +85,29 @@ bool Motion::advance(){
     turn(-90);
     if(!checkForWalls(2000)){
         checkForRoom(1); //pass 1 for right
-        return false;
     }
 
     //look left, see if there is a wall.
     turn(90);turn(90); // 2x 90 degrees is more accurate than 1x180 due to gyro inaccuracies.
     if(!checkForWalls(2000)){
         checkForRoom(2); //pass 2 for left
-        return false;
     }
 
     //turn back straight and advance
     turn(-90);
     motors.setSpeeds(100, 100);
-    if(!checkForWalls(2000)){
+    /*if(!checkForWalls(200)){
         return false;
-    }
+    }*/
 }
 
 //moves forwards looking for a wall. Returns false if not found before a timeout.
 bool Motion::checkForWalls(int timeout){
     //edge fowards checking for walls.
+    Serial.println("checking for wall");
     reflectanceSensors.readLine(sensors);
     int t = millis(); //time coming into the function.
-    while(!againstWall() && ((millis() - t) < timeout)){
+    while(!againstWall() && (((millis() - t) < timeout) || timeout == 0)){
         //read date from sensors
         reflectanceSensors.readLine(sensors);
 
@@ -130,16 +123,13 @@ bool Motion::checkForWalls(int timeout){
         }else{
             motors.setRightSpeed(100);
         }
+
     }
 
 
 
     if(againstWall()){
         //wall found
-        //back up from found wall slightly.
-        motors.setSpeeds(-100, -100);
-        delay(500);
-        motors.setSpeeds(0, 0);
         return true;
     }else{
         //no wall found, hit timeout
@@ -150,35 +140,28 @@ bool Motion::checkForWalls(int timeout){
 //checks to see if we have entered a room
 bool Motion::checkForRoom(int inDirection){
     //look right, see if there is a wall.
+    Serial.println("Checking for room");
     turn(-90);
-    if(!checkForWalls(1000)){
-        return false;
-    }
+    bool foundRight = checkForWalls(500);
 
     //look left, see if there is a wall.
     turn(90);turn(90); // 2x 90 degrees is more accurate than 1x180 due to gyro inaccuracies.
-    if(!checkForWalls(2000)){
-        return false;
-    }
+    bool foundLeft = checkForWalls(500);
 
     //there is no wall to the left or right, must be in room.
-    exploreRoom(inDirection);
-}
-
-//explores the room and lets the user know if we have found anything.
-void Motion::exploreRoom(int inDirection){
-    roomCount++;
-    if(checkRoom()){
-        XBee.print("An object was found in room ");
-        XBee.println(roomCount);
-    }else{
-        XBee.print("No object was found in room ");
-        XBee.println(roomCount);
+    if(!foundLeft && !foundRight){
+        exploreRoom(inDirection);
     }
+    Serial.println("Exiting Room");
+    //b.waitForButton();
 
-    turn(90);turn(90); //turn 180 to face door
+    //Serial.println("Turning to leave");
+    //turn(90);turn(90); //turn 180 to face door
+    b.waitForButton();
 
+    motors.setSpeeds(100, 100);
     checkForWalls(0); //no timeout as we know there is a wall
+    b.waitForButton();
 
     if(inDirection == 1){
         //entered from looking right. Need to turn right heading out.
@@ -187,22 +170,31 @@ void Motion::exploreRoom(int inDirection){
         //entered from looking left, need to turn left heading out.
         turn(90);
     }
+
+    Serial.println("Room should be exited");
+
 }
 
-//returns weather there is an object in the room
-bool Motion::checkRoom(){
-        int degrees = 360;
-        bool found = false;
-        while(degrees > 0){
-            if(getDistance() > 0){
-                Serial.println("Found Object");
-                found = true;
-            }
-            turn(90);
-            degrees = degrees - 90;
+//explores the room and lets the user know if we have found anything.
+void Motion::exploreRoom(int inDirection){
+    roomCount++;
+    Serial.println("Exploring Room");
+    for(int i = 0; i <= 4; i++){
+        if(getDistance() > 0){
+            Serial.print("An object was found in room ");
+            Serial.println(roomCount);
         }
-        return found;
+        turn(90);
+        delay(500);
+    //    b.waitForButton();
+    }
+
+    Serial.print("No object was found in room ");
+    Serial.println(roomCount);
+    Serial.println("Room explored");
+    delay(100);
 }
+
 
 //returns distance found by ultrasonic sensor.
 int Motion::getDistance(){
