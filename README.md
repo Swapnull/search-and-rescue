@@ -25,9 +25,6 @@ The XBee's are not mandatory. If you use an XBee, it should be setup following t
 
 The HC-SR04 and any jumper cables used should be secured using electrical tape or something similar.
 
-![Zumo Image 1](https://github.com/Swapnull/search-and-rescue/blob/master/assets/img/zumo1.jpg)
-![Zumo Image 2](https://github.com/Swapnull/search-and-rescue/blob/master/assets/img/zumo1.jpg)
-### Software Setup
 
 #### [Arduino IDE](http://www.arduino.cc/en/Main/Software)
 - Ensure you have the [Arduino IDE](http://www.arduino.cc/en/Main/Software)
@@ -50,3 +47,15 @@ ano build && ano upload
 ```
 
 ### Course Setup
+The course must be set up with the following measurements.
+- The corridor width is approximately 1.2x the width of the Zumo.
+- The room depth is approximately 1.5x the width of the corridor.
+- The door width is approximately 2x the width of the corridor.
+- The width of the wall should be around 2cm.
+
+Using those constraints, the course can be setup however desired so long as there are no two rooms opposite each other.
+
+### Hand-in Documents
+- There is a report that is roughly 1500 words long that can be found in /report.docx.
+- There are images of the zumo setup that can be found at /assets/img.
+- There are videos that can be found at /assets/video. These videos contain the individual sections (moving down corridor, going in and out of rooms, turning corners, reaching the course end)

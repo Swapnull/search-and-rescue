@@ -33,16 +33,7 @@ void setup(){
 }
 
 void loop(){
-    Serial.println("looping");
 
-    /*if(!motion.run()){
-        tries++;
-        if(tries >= 3){
-            tries = 0;
-            motion.inRoom = true;
-        }
-    }*/
-    //Serial.println(motion.getDistance());
     motion.run();
 
     delay(1000);

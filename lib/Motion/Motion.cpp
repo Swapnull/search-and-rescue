@@ -55,9 +55,9 @@ void Motion::turn(int target){
 
     Serial.print("turning ");
     if(target > 0)
-        Serial.println("anticlockwise.");
+        Serial.println("anticlockwise 90 degrees.");
     else
-        Serial.println("clockwise");
+        Serial.println("clockwise 90 degrees.");
 
     turnSensorReset();
     int32_t currHeading = Utilities::wrapAngle(turnSensorUpdate());
@@ -96,19 +96,24 @@ bool Motion::advance(){
     //look right, see if there is a wall.
     turn(-90);
     if(!checkForWalls(2000)){
+        Serial.println("Checking for room to my right.");
         checkForRoom(1); //pass 1 for right
+        return false;
     }
 
     //look left, see if there is a wall.
     turn(90);turn(90); // 2x 90 degrees is more accurate than 1x180 due to gyro inaccuracies.
     if(!checkForWalls(2000)){
+        Serial.println("Checking for room to my left.");
         checkForRoom(2); //pass 2 for left
+        return false;
     }
 
     //turn back straight and advance
     turn(-90);
     motors.setSpeeds(100, 100);
-    if(checkForWalls(500)){
+    if(checkForWalls(1000)){
+        Serial.println("There are no rooms here. Advance.");
         checkForEnd();
         return false;
     }
@@ -174,18 +179,48 @@ bool Motion::checkForRoom(int inDirection){
 
     //Serial.println("Turning to leave");
     //turn(90);turn(90); //turn 180 to face door
-    b.waitForButton();
+    //b.waitForButton();
 
     motors.setSpeeds(100, 100);
     checkForWalls(0); //no timeout as we know there is a wall
-    b.waitForButton();
+    //b.waitForButton();
 
     if(inDirection == 1){
         //entered from looking right. Need to turn right heading out.
         turn(-90);
+        if(checkForWalls(2000)){
+            checkForEnd();
+            return false;
+        }else{
+            //dont want to check for rooms right after coming out of room but need to make sure we are lined up to wall.
+            turn(-90);
+            if(!checkForWalls(2000)){
+                Serial.println("Checking for room to my left.");
+                checkForRoom(1); //pass 1 for right
+                return false;
+            }
+        }
     }else{
         //entered from looking left, need to turn left heading out.
         turn(90);
+
+        if(checkForWalls(2000)){
+            checkForEnd();
+            return false;
+        }else{
+            //dont want to check for rooms right after coming out of room but need to make sure we are lined up to wall.
+            turn(-90);
+            if(!checkForWalls(2000)){
+                Serial.println("Checking for room to my right.");
+                checkForRoom(2); //pass 1 for left
+                return false;
+            }
+        }
+    }
+
+    if(checkForWalls(2000)){
+        checkForEnd();
+        return false;
     }
 
     Serial.println("Room should be exited");
