@@ -16,8 +16,7 @@ void loop();
 const int MAX_SPEED = 400;
 Motion motion;
 Pushbutton button(ZUMO_BUTTON);
-bool res;
-int tries;
+
 
 
 

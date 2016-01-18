@@ -181,7 +181,6 @@ void Motion::exploreRoom(int inDirection){
         }
         turn(90);
         delay(500);
-    //    b.waitForButton();
     }
 
     Serial.print("No object was found in room ");
@@ -190,6 +189,7 @@ void Motion::exploreRoom(int inDirection){
     delay(100);
 }
 
+//helper to get out of the room.
 void Motion::exitRoom(int inDirection){
     //run motors to get out of room
     motors.setSpeeds(100, 100);
@@ -235,6 +235,7 @@ void Motion::exitRoom(int inDirection){
     }
 }
 
+//checks to see if we are at the end of the track
 bool Motion::checkForEnd(){
         Serial.println("Checking for end of corridor.");
         turn(-90);
@@ -259,6 +260,7 @@ int Motion::getDistance(){
     return sonar.ping()/ US_ROUNDTRIP_CM;
 }
 
+//levels reflectance sensor to wall
 void Motion::levelToWall(){
     //first level so both sensors are on wall
     //check if right side is above line
