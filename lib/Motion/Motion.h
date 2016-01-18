@@ -12,18 +12,17 @@ public:
     void turn(int target);
     bool advance();
     bool checkForWalls(int timeout = 0);
-    bool againstWall();
-    bool aboveLine(int sensor);
-    bool checkRoom();
-    int getDistance();
     bool checkForRoom(int inDirection);
     void exploreRoom(int inDirection);
+    void exitRoom(int inDirection);
     bool checkForEnd();
+    int getDistance();
     void levelToWall();
+    bool againstWall();
+    bool aboveLine(int sensor);
 
     ZumoReflectanceSensorArray reflectanceSensors;
     unsigned int sensors[6];
-    bool inRoom;
     int roomCount;
 private:
 

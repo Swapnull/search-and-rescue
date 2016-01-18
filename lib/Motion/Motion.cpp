@@ -21,7 +21,6 @@ NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
 
 //constructor
 Motion::Motion(){
-    inRoom = false;
     roomCount = 0;
 }
 
@@ -70,15 +69,6 @@ void Motion::turn(int target){
         done = Utilities::inRange(fabs(error), (float) -1,(float) 1);
 
         speed = 150;
-        /*speed = (error * 6.5) + ((int)(error * 0.001));
-        Serial.print(error);
-        Serial.print(" : ");
-         /* Note: this is used because powers higher than 250 result
-         * in a buildup of error in the integrated gyro angle
-         *
-        if (speed > 200) {
-            speed = 100;
-        }*/
 
         if (error > 0) {
             motors.setSpeeds(speed, -speed);
@@ -95,7 +85,7 @@ bool Motion::advance(){
     Serial.println("Advancing");
     //look right, see if there is a wall.
     turn(-90);
-    if(!checkForWalls(2000)){
+    if(!checkForWalls(1000)){
         Serial.println("Checking for room to my right.");
         checkForRoom(1); //pass 1 for right
         return false;
@@ -103,7 +93,7 @@ bool Motion::advance(){
 
     //look left, see if there is a wall.
     turn(90);turn(90); // 2x 90 degrees is more accurate than 1x180 due to gyro inaccuracies.
-    if(!checkForWalls(2000)){
+    if(!checkForWalls(1000)){
         Serial.println("Checking for room to my left.");
         checkForRoom(2); //pass 2 for left
         return false;
@@ -112,7 +102,7 @@ bool Motion::advance(){
     //turn back straight and advance
     turn(-90);
     motors.setSpeeds(100, 100);
-    if(checkForWalls(1000)){
+    if(checkForWalls(2000)){
         Serial.println("There are no rooms here. Advance.");
         checkForEnd();
         return false;
@@ -125,13 +115,10 @@ bool Motion::checkForWalls(int timeout){
     Serial.println("checking for wall");
     reflectanceSensors.readLine(sensors);
     int t = millis(); //time coming into the function.
-    while(againstWall() != 1 && (((millis() - t) < timeout) || timeout == 0)){
+    while(!againstWall() && (((millis() - t) < timeout) || timeout == 0)){
         //read date from sensors
         reflectanceSensors.readLine(sensors);
 
-        if(againstWall() == 2 || againstWall() == 3){
-            break;
-        }
         //check if right side is above line
         if(aboveLine(sensors[0]) && aboveLine(sensors[1])){
             motors.setLeftSpeed(0);
@@ -174,54 +161,10 @@ bool Motion::checkForRoom(int inDirection){
     if(!foundLeft && !foundRight ){
         exploreRoom(inDirection);
     }
-    Serial.println("Exiting Room");
-    //b.waitForButton();
 
-    //Serial.println("Turning to leave");
-    //turn(90);turn(90); //turn 180 to face door
-    //b.waitForButton();
 
-    motors.setSpeeds(100, 100);
-    checkForWalls(0); //no timeout as we know there is a wall
-    //b.waitForButton();
+    exitRoom(inDirection);
 
-    if(inDirection == 1){
-        //entered from looking right. Need to turn right heading out.
-        turn(-90);
-        if(checkForWalls(2000)){
-            checkForEnd();
-            return false;
-        }else{
-            //dont want to check for rooms right after coming out of room but need to make sure we are lined up to wall.
-            turn(-90);
-            if(!checkForWalls(2000)){
-                Serial.println("Checking for room to my left.");
-                checkForRoom(1); //pass 1 for right
-                return false;
-            }
-        }
-    }else{
-        //entered from looking left, need to turn left heading out.
-        turn(90);
-
-        if(checkForWalls(2000)){
-            checkForEnd();
-            return false;
-        }else{
-            //dont want to check for rooms right after coming out of room but need to make sure we are lined up to wall.
-            turn(-90);
-            if(!checkForWalls(2000)){
-                Serial.println("Checking for room to my right.");
-                checkForRoom(2); //pass 1 for left
-                return false;
-            }
-        }
-    }
-
-    if(checkForWalls(2000)){
-        checkForEnd();
-        return false;
-    }
 
     Serial.println("Room should be exited");
 
@@ -247,7 +190,53 @@ void Motion::exploreRoom(int inDirection){
     delay(100);
 }
 
+void Motion::exitRoom(int inDirection){
+    //run motors to get out of room
+    motors.setSpeeds(100, 100);
+    checkForWalls(0); //no timeout as we know there is a wall
+
+    if(inDirection == 1){
+        //entered from looking right. Need to turn right heading out.
+        turn(-90);
+        if(checkForWalls(2000)){
+            checkForEnd();
+            return;
+        }else{
+            //dont want to check for rooms right after coming out of room but need to make sure we are lined up to wall.
+            turn(90);
+            if(!checkForWalls(2000)){
+                Serial.println("Checking for room to my left.");
+            }
+            turn(-90);
+        }
+    }else{
+
+
+        turn(90);
+
+        if(checkForWalls(2000)){
+            checkForEnd();
+            return;
+        }else{
+            turn(-90);
+            if(!checkForWalls(2000)){
+                Serial.println("Checking for room to my right.");
+            }
+            turn(90);
+
+
+        }
+
+    }
+
+    if(checkForWalls(2000)){
+        checkForEnd();
+        return;
+    }
+}
+
 bool Motion::checkForEnd(){
+        Serial.println("Checking for end of corridor.");
         turn(-90);
         if(!checkForWalls(2000)){
             return false;
@@ -259,7 +248,9 @@ bool Motion::checkForEnd(){
         }
 
         //a wall has been found ahead, left and right, must be the end.
-        Serial.println("Reached end of corridor, returning to base");
+        Serial.println("Reached end of corridor, press button to return to base");
+        motors.setSpeeds(0, 0);
+        b.waitForButton();
         return true;
 }
 
@@ -305,28 +296,11 @@ void Motion::levelToWall(){
     }
 
 }
+
 //returns if zumo is against a wall or not.
 bool Motion::againstWall(){
-
-    // DEBUG : Print out if the sensors think they are above a line.
-    /*Serial.print(aboveLine(sensors[0]));
-    Serial.print(" : ");
-    Serial.print(aboveLine(sensors[1]));
-    Serial.print(" : ");
-    Serial.print(aboveLine(sensors[2]));
-    Serial.print(" : ");
-    Serial.print(aboveLine(sensors[3]));
-    Serial.print(" : ");
-    Serial.print(aboveLine(sensors[4]));
-    Serial.print(" : ");
-    Serial.println(aboveLine(sensors[5]));*/
-
     if(aboveLine(sensors[0]) && aboveLine(sensors[1]) && aboveLine(sensors[4]) && aboveLine(sensors[5])){
-        return 1;
-    } else if(aboveLine(sensors[0]) && aboveLine(sensors[1]) && aboveLine(sensors[4])) {
-        return 2;
-    } else if(aboveLine(sensors[1]) && aboveLine(sensors[4]) && aboveLine(sensors[5])){
-        return 3;
+        return true;
     } else {
         return false;
     }
